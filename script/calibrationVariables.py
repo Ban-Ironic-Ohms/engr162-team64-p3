@@ -1,4 +1,7 @@
 class LargeLegoMotor:
+    degrees_per_sec_at_250 = 79.33
+    mm_per_sec_at_250 = 122
+    
     power_to_speed = 1.27 # takes power in the given units and gives speed in cm/s
     delta_encoder_to_position = 10 # takes change in encoder position and gives a change in position in cm
     time_to_angle = 10
@@ -29,3 +32,4 @@ class UltrasonicSensor:
     
     def __str__(self) -> str:
         return f"US reading @ 10cm to hill: {self.hillDist}"
+    
