@@ -14,6 +14,7 @@ import grovepi
 from script.calibrationVariables import LargeLegoMotor, SmallLegoMotor
 import script.sensors as sensors
 from math import atan2, degrees, sqrt
+from script.map import Map
 # from matplotlib import pyplot as plt
 
 # ---------- INITIALIZATION ---------- #
@@ -67,20 +68,18 @@ def turn(dir, speed=BASE_SPEED): # defining dir=direction 0 to be straight, +1 a
     dir, turn_state = dir - turn_state, dir
     
 def turnInPlace(angle, dps=BASE_DPS):
-    # initial_angle = sensors.queryHeading()
-    start_time = time.time()
+    start = sensors.queryAngle()
+    print(f"Turning to {angle} deg, starting at {start}")
     
-    shift_deg_per_deg = 1.25
-    angle *= shift_deg_per_deg
-    
-    while time.time() < start_time + (abs(angle) * (1 / LargeLegoMotor.degrees_per_sec_at_250)):
-        if angle > 0:
+    if angle > 0:
+        while -sensors.queryAngle() < start + angle:
             lf(dps)
             rf(-dps)
-        else:
+    elif angle < 0:
+        while -sensors.queryAngle() > start + angle:
             lf(-dps)
             rf(dps)
-        time.sleep(0.05)
+            
     allStop()
 
 def uncertainTurn(dps, turn_distance):
@@ -162,6 +161,33 @@ def navigate(x, y):
 #     plt.plot([i[0] for i in l_motor_data], [i[1] for i in l_motor_data])
 #     plt.show()
 
+def completeMaze():
+    map = Map("cm", "hello world")
+    
+    for i in range(4):
+        moveCell()
+        map.place(1, 0, map.current_cord[1] + 1)
+        map.move(0, 1)
+        # scan()
+        
+    print(map)
+    return map
+
+def moveCell(dist=10, dps=BASE_DPS):
+    dist *= 10 # cm to mm
+    start = time.time()
+    while time.time() < start + (dist / LargeLegoMotor.mm_per_sec_at_250):
+        fw(dps)
+        
+    allStop()
+    
+def scan():
+    for i in range(4):
+        turnInPlace(90)
+        # check for IR and magnet
+    return
+    
+
 def allStop():
     print("Stopping")    
     for port in all_motors:
@@ -170,5 +196,3 @@ def allStop():
     
     BP.reset_all()
     return True
-    
-    
