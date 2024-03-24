@@ -6,7 +6,9 @@ from script.calibrationVariables import *
 # angle = float(input("ANGLE -> "))
 
 try:
+    # mv.turnInPlace(50, 500)
     mv.completeMaze()
+    
     
 except KeyboardInterrupt:
     print("pressed ctrl+c")

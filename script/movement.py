@@ -27,6 +27,8 @@ T_MOTOR_PORT = BP.PORT_A
 
 all_motors = [L_MOTOR_PORT, R_MOTOR_PORT, T_MOTOR_PORT]
 
+BP.set_sensor_type(BP.PORT_1, BP.SENSOR_TYPE.EV3_GYRO_ABS_DPS)
+
 # ---------- GLOBAL VARIABLES ---------- #
 BASE_SPEED = 20
 BASE_DPS = 250
@@ -72,14 +74,33 @@ def turnInPlace(angle, dps=BASE_DPS):
     print(f"Turning to {angle} deg, starting at {start}")
     
     if angle > 0:
-        while -sensors.queryAngle() < start + angle:
+        ang = -sensors.queryAngle()
+        while ang < 0.8 * (start + angle):
             lf(dps)
             rf(-dps)
+            ang = -sensors.queryAngle()
+            time.sleep(0.02)
+        while ang < start + angle:
+            lf(dps * 0.2)
+            rf(-dps * 0.2)
+            ang = -sensors.queryAngle()
+            time.sleep(0.02)
+        
+        
     elif angle < 0:
-        while -sensors.queryAngle() > start + angle:
+        ang = -sensors.queryAngle()
+        while -sensors.queryAngle() > 0.8 * (start + angle):
             lf(-dps)
             rf(dps)
-            
+            ang = -sensors.queryAngle()
+            time.sleep(0.02)
+        while ang > start + angle:
+            lf(-dps * 0.2)
+            rf(dps * 0.2)
+            ang = -sensors.queryAngle()
+            time.sleep(0.02)
+        
+        
     allStop()
 
 def uncertainTurn(dps, turn_distance):
@@ -132,7 +153,7 @@ def followPath(dps=BASE_DPS, sensitivity=1.1, speed_fac=1.1, diff_fac=0.1):
             else:
                 fw(dps)
 
-            time.sleep(0.05)
+            # time.sleep(0.05)
             
         uncertainTurn(dps, turn_distance)
 
@@ -162,29 +183,49 @@ def navigate(x, y):
 #     plt.show()
 
 def completeMaze():
-    map = Map("cm", "hello world")
-    
-    for i in range(4):
-        moveCell()
-        map.place(1, 0, map.current_cord[1] + 1)
-        map.move(0, 1)
-        # scan()
-        
-    print(map)
-    return map
+    map = Map(10, "hello world")
+    try:
+        while True:
+            ld = sensors.queryLUS()
+            while ld < 20:
+                moveCell()
+                
+                print("moved")
+                
+                map.move(0, 1)
+                map.place_here(1)
+                print(repr(map))
+                
+                ld = sensors.queryLUS()
+            turnInPlace(-90)
+            print("simulating turn!")
+            map.turn(90)
+            while ld > 20:
+                ld = sensors.queryLUS()
+                time.sleep(0.02)
+                
+    except KeyboardInterrupt:
+        print("\n\n")
+        print(map)
+        allStop()
+        return map
 
 def moveCell(dist=10, dps=BASE_DPS):
+    dps = BASE_DPS
     dist *= 10 # cm to mm
     start = time.time()
     while time.time() < start + (dist / LargeLegoMotor.mm_per_sec_at_250):
         fw(dps)
         
     allStop()
+    return
     
 def scan():
     for i in range(4):
         turnInPlace(90)
         # check for IR and magnet
+        if sensors.query_IR() > 50:
+            print("\n\n\nSAW A IR BEACON!\n\n\n")
     return
     
 
